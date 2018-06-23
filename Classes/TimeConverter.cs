@@ -6,10 +6,12 @@ namespace BerlinClock.Classes
     public class TimeConverter : ITimeConverter
     {
         private const char Yellow = 'Y';
+
         /// <summary>
-        /// Denotes the defaultCharacter with which remaining positions are filled
+        ///     Denotes the defaultCharacter with which remaining positions are filled
         /// </summary>
         public const char Filler = 'O';
+
         private const char Red = 'R';
 
         private static readonly Func<int, string> FormatHours = CreateFormatFunc(4, Red);
@@ -21,11 +23,26 @@ namespace BerlinClock.Classes
 
         public string ConvertTime(string aTime)
         {
-            return FormatBerlinTuple(ConvertTimeTupeToBerlinTuple(ParseTimeFormat(aTime)));
+            return FormatBerlinTuple(ConvertTimeTupeToBerlinTuple(VerifyTimeTuple(ParseTimeFormat(aTime))));
         }
 
         /// <summary>
-        /// Converts an input like: 23:59:59 into a named tuple (hours, minutes, seconds)
+        /// Verifies that the numeric boundaries are within realistic values
+        /// </summary>
+        /// <param name="timeTuple"></param>
+        public static (int hours, int minutes, int seconds) VerifyTimeTuple((int hours, int minutes, int seconds) timeTuple)
+        {
+            if (timeTuple.hours < 0 || timeTuple.hours > 24)
+                throw new ArgumentException($"Hours should be within 0 and 24, it was ${timeTuple.hours}");
+            if (timeTuple.minutes < 0 || timeTuple.minutes > 59)
+                throw new ArgumentException($"Minutes should be within 0 and 59, it was ${timeTuple.minutes}");
+            if (timeTuple.seconds < 0 || timeTuple.seconds > 59)
+                throw new ArgumentException($"Seconds should be within 0 and 59, it was ${timeTuple.seconds}");
+            return timeTuple;
+        }
+
+        /// <summary>
+        ///     Converts an input like: 23:59:59 into a named tuple (hours, minutes, seconds)
         /// </summary>
         /// <param name="aTime">time as string</param>
         /// <returns>time as tuple</returns>
@@ -56,13 +73,12 @@ namespace BerlinClock.Classes
         }
 
         /// <summary>
-        /// Converts time as (hours, minutes, seconds) into a berlin clock tuple (hours5, hours1, minutes5, minutes1, secondsEven)
-        ///
-        /// Explanations of the berlin touple fields:
-        /// hours5/1: how many 5/1-hour segments should be lit
-        /// minutes5/1: how many 5/1-minutes segments should be lit
-        /// secondsEven: whether the seconds are even
-        /// 
+        ///     Converts time as (hours, minutes, seconds) into a berlin clock tuple (hours5, hours1, minutes5, minutes1,
+        ///     secondsEven)
+        ///     Explanations of the berlin touple fields:
+        ///     hours5/1: how many 5/1-hour segments should be lit
+        ///     minutes5/1: how many 5/1-minutes segments should be lit
+        ///     secondsEven: whether the seconds are even
         /// </summary>
         /// <param name="timeTuple">a time tuple</param>
         /// <returns>a Berlin clock tuple</returns>
@@ -79,11 +95,10 @@ namespace BerlinClock.Classes
         }
 
         /// <summary>
-        /// Create a Function the format a string to a certain length with an options Functions to tranpose characters at certain positions.
-        ///
-        /// e.g. var f = CreateFormatFunc(5, 'R', index => index == 2, 'X')
-        /// f(3) would result into "RRXOO"
-        /// 
+        ///     Create a Function the format a string to a certain length with an options Functions to tranpose characters at
+        ///     certain positions.
+        ///     e.g. var f = CreateFormatFunc(5, 'R', index => index == 2, 'X')
+        ///     f(3) would result into "RRXOO"
         /// </summary>
         /// <param name="positions">length of the output string</param>
         /// <param name="defaultCharacter">to fill up from the start, the rest is filled with TimeConverter.Filler</param>
@@ -98,7 +113,8 @@ namespace BerlinClock.Classes
             {
                 var characterArray = Enumerable.Range(0, count)
                     .Select(index =>
-                        transposeOnIndex != null && transposeOnIndex(index) ? transposeCharacter : defaultCharacter).ToArray();
+                        transposeOnIndex != null && transposeOnIndex(index) ? transposeCharacter : defaultCharacter)
+                    .ToArray();
                 var filler = new string(Filler, positions - count);
                 return new string(characterArray) + filler;
             };

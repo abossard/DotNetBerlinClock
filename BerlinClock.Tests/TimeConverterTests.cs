@@ -8,6 +8,27 @@ namespace BerlinClock.Tests
     [TestClass]
     public class TimeConverterTests
     {
+        
+        [TestMethod]
+        public void VerifyTimeTuple_ValidInput_Success()
+        {
+            // Arrange
+            var input = (24, 0 , 0);
+
+            // Act, Assert
+            TimeConverter.VerifyTimeTuple(input);
+        }
+
+        [TestMethod]
+        public void VerifyTimeTuple_InvalidInput_Exception()
+        {
+            // Arrange
+            var input = (25, 0 , 0);
+
+            // Act, Assert
+            Assert.ThrowsException<ArgumentException>(() => TimeConverter.VerifyTimeTuple(input));
+        }
+
         [TestMethod]
         public void ParseTimeFormat_ValidInput_Success()
         {
