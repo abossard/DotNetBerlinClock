@@ -1,12 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace BerlinClock
+﻿namespace BerlinClock.Classes
 {
+    /// <summary>
+    /// Converts an string based time input into a berlin clock string.
+    ///
+    /// E.g. 23:59:59 results into
+    /// O
+    /// RRRR
+    /// RRRO
+    /// YYRYYRYYRYY
+    /// YYYY
+    ///
+    /// More information is available here: https://en.wikipedia.org/wiki/Mengenlehreuhr
+    /// </summary>
     public interface ITimeConverter
     {
-        String convertTime(String aTime);
+        string ConvertTime(string aTime);
     }
 }
