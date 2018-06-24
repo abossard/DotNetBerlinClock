@@ -21,32 +21,26 @@ namespace BerlinClock.Classes
 
         private static readonly Func<int, string> FormatMinutes1 = CreateFormatFunc(4, Yellow);
 
-        public string ConvertTime(string aTime)
-        {
-            return FormatBerlinTuple(ConvertTimeTupeToBerlinTuple(VerifyTimeTuple(ParseTimeFormat(aTime))));
-        }
-
         /// <summary>
-        /// Verifies that the numeric boundaries are within realistic values
+        ///     Verifies that the numeric boundaries are within realistic values
         /// </summary>
-        /// <param name="timeTuple"></param>
-        public static (int hours, int minutes, int seconds) VerifyTimeTuple((int hours, int minutes, int seconds) timeTuple)
-        {
-            if (timeTuple.hours < 0 || timeTuple.hours > 24)
-                throw new ArgumentException($"Hours should be within 0 and 24, it was ${timeTuple.hours}");
-            if (timeTuple.minutes < 0 || timeTuple.minutes > 59)
-                throw new ArgumentException($"Minutes should be within 0 and 59, it was ${timeTuple.minutes}");
-            if (timeTuple.seconds < 0 || timeTuple.seconds > 59)
-                throw new ArgumentException($"Seconds should be within 0 and 59, it was ${timeTuple.seconds}");
-            return timeTuple;
-        }
+        public static readonly Func<(int hours, int minutes, int seconds), (int hours, int minutes, int seconds)>
+            VerifyTimeTuple = timeTuple =>
+            {
+                if (timeTuple.hours < 0 || timeTuple.hours > 24)
+                    throw new ArgumentException($"Hours should be within 0 and 24, it was ${timeTuple.hours}");
+                if (timeTuple.minutes < 0 || timeTuple.minutes > 59)
+                    throw new ArgumentException($"Minutes should be within 0 and 59, it was ${timeTuple.minutes}");
+                if (timeTuple.seconds < 0 || timeTuple.seconds > 59)
+                    throw new ArgumentException($"Seconds should be within 0 and 59, it was ${timeTuple.seconds}");
+                return timeTuple;
+            };
 
         /// <summary>
         ///     Converts an input like: 23:59:59 into a named tuple (hours, minutes, seconds)
         /// </summary>
-        /// <param name="aTime">time as string</param>
         /// <returns>time as tuple</returns>
-        public static (int hours, int minutes, int seconds) ParseTimeFormat(string aTime)
+        public static readonly Func<string, (int hours, int minutes, int seconds)> ParseTimeFormat = aTime =>
         {
             try
             {
@@ -70,7 +64,7 @@ namespace BerlinClock.Classes
                     );
                 throw;
             }
-        }
+        };
 
         /// <summary>
         ///     Converts time as (hours, minutes, seconds) into a berlin clock tuple (hours5, hours1, minutes5, minutes1,
@@ -80,18 +74,33 @@ namespace BerlinClock.Classes
         ///     minutes5/1: how many 5/1-minutes segments should be lit
         ///     secondsEven: whether the seconds are even
         /// </summary>
-        /// <param name="timeTuple">a time tuple</param>
         /// <returns>a Berlin clock tuple</returns>
-        public static (int hours5, int hours1, int minutes5, int minutes1, bool secondsEven)
-            ConvertTimeTupeToBerlinTuple((int hours, int minutes, int seconds) timeTuple)
-        {
-            return (
+        public static readonly
+            Func<(int hours, int minutes, int seconds), (int hours5, int hours1, int minutes5, int minutes1, bool
+                secondsEven)> ConvertTimeTupeToBerlinTuple = timeTuple => (
                 hours5: timeTuple.hours / 5,
                 hours1: timeTuple.hours % 5,
                 minutes5: timeTuple.minutes / 5,
                 minutes1: timeTuple.minutes % 5,
                 secondsEven: timeTuple.seconds % 2 == 0
             );
+
+        private static readonly Func<(int hours5, int hours1, int minutes5, int minutes1, bool secondsEven), string>
+            FormatBerlinTuple = berlinTuple => string.Join("\r\n",
+                berlinTuple.secondsEven ? Yellow : Filler,
+                FormatHours(berlinTuple.hours5),
+                FormatHours(berlinTuple.hours1),
+                FormatMinutes(berlinTuple.minutes5),
+                FormatMinutes1(berlinTuple.minutes1)
+            );
+
+        public string ConvertTime(string aTime)
+        {
+            var composition = ParseTimeFormat
+                .Then(VerifyTimeTuple)
+                .Then(ConvertTimeTupeToBerlinTuple)
+                .Then(FormatBerlinTuple);
+            return composition(aTime);
         }
 
         /// <summary>
@@ -118,18 +127,6 @@ namespace BerlinClock.Classes
                 var filler = new string(Filler, positions - count);
                 return new string(characterArray) + filler;
             };
-        }
-
-        private static string FormatBerlinTuple(
-            (int hours5, int hours1, int minutes5, int minutes1, bool secondsEven) berlinTuple)
-        {
-            return string.Join("\r\n",
-                berlinTuple.secondsEven ? Yellow : Filler,
-                FormatHours(berlinTuple.hours5),
-                FormatHours(berlinTuple.hours1),
-                FormatMinutes(berlinTuple.minutes5),
-                FormatMinutes1(berlinTuple.minutes1)
-            );
         }
     }
 }
